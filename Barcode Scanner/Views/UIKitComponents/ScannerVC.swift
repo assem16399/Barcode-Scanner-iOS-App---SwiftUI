@@ -8,9 +8,9 @@
 import UIKit
 import AVFoundation
 
-enum CameraError: String {
-    case invalidDeviceInput = "Something worng with the camera. We're not able to capture input."
-    case invalidScannedValue = "The value scanned is invalid. This app scans EAN-8 &  EAN-13."
+enum CameraError {
+    case invalidDeviceInput
+    case invalidScannedValue
 }
 
 protocol ScannerVCDelegate:AnyObject {
@@ -19,6 +19,8 @@ protocol ScannerVCDelegate:AnyObject {
 }
 
 final class ScannerVC: UIViewController {
+    
+    var isViewDidLayoutSubviews = false
 
     // The Camera Capturing Session
     let captureSession = AVCaptureSession()
@@ -43,12 +45,14 @@ final class ScannerVC: UIViewController {
     }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        
-        guard let previewLayer else {
-            scannerDelegate.didSurface(error: .invalidDeviceInput)
-            return
+        if !isViewDidLayoutSubviews
+        {
+            isViewDidLayoutSubviews = true
+            guard let previewLayer else {
+                return
+            }
+            previewLayer.frame = view.layer.bounds
         }
-        previewLayer.frame = view.layer.bounds
     }
 
     // Basic setup to get our camera up and running, looking for barcode and running previewLayer (Heart of this ViewController)
@@ -57,7 +61,6 @@ final class ScannerVC: UIViewController {
         guard let videoCaptureDevice = AVCaptureDevice.default(for: .video) else{
             scannerDelegate.didSurface(error: .invalidDeviceInput)
             return
-            
         }
         
         let videoInput: AVCaptureDeviceInput
@@ -114,7 +117,6 @@ extension ScannerVC:AVCaptureMetadataOutputObjectsDelegate{
             scannerDelegate.didSurface(error: .invalidScannedValue)
             return
         }
-        
         scannerDelegate.didFind(barcode: barcode)
     }
 }
